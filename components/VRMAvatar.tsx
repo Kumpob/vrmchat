@@ -20,15 +20,22 @@ type Props = {
   started: boolean;
   audioUrl: string;
   stopIdle: boolean;
+  onAudioEnd: () => void | undefined;
 };
 
-const IDLE_FBX_FILES = ["looking.fbx", "waving.fbx"];
+const IDLE_FBX_FILES = ["texting.fbx", "looking.fbx"];
 // How many seconds of inactivity before a random animation triggers
-const INACTIVITY_THRESHOLD = 8;
+const INACTIVITY_THRESHOLD = 10;
 
-export default function VRMAvatar({ started, audioUrl, stopIdle }: Props) {
+export default function VRMAvatar({
+  started,
+  audioUrl,
+  stopIdle,
+  onAudioEnd,
+}: Props) {
   const vrmRef = useRef<VRM | null>(null);
   const mixerRef = useRef<THREE.AnimationMixer | null>(null);
+  const phoneRef = useRef<THREE.Object3D | null>(null);
 
   // Actions
   const idleActionRef = useRef<THREE.AnimationAction | null>(null);
@@ -46,7 +53,7 @@ export default function VRMAvatar({ started, audioUrl, stopIdle }: Props) {
 
   // Audio
   const analyserRef = useRef<AnalyserNode | null>(null);
-  const dataArrayRef = useRef<Uint8Array | null>(null);
+  const dataArrayRef = useRef<Uint8Array<ArrayBuffer> | null>(null);
 
   const { camera } = useThree();
 
@@ -56,6 +63,14 @@ export default function VRMAvatar({ started, audioUrl, stopIdle }: Props) {
     duration = 0.3,
   ) => {
     to.reset().play();
+    console.log((to as any).name);
+    const isTexting = (to as any).name === "texting.fbx";
+    console.log(isTexting);
+    // toggle phone
+    if (phoneRef.current) {
+      phoneRef.current.visible = isTexting;
+    }
+
     if (from && from !== to) {
       from.crossFadeTo(to, duration, true);
     }
@@ -64,6 +79,9 @@ export default function VRMAvatar({ started, audioUrl, stopIdle }: Props) {
 
   const returnToIdle = () => {
     if (!idleActionRef.current) return;
+    if (phoneRef.current) {
+      phoneRef.current.visible = false;
+    }
     crossFadeTo(activeActionRef.current, idleActionRef.current);
     isPlayingIdleAnimRef.current = false;
     // Reset inactivity so it doesn't immediately retrigger
@@ -99,7 +117,6 @@ export default function VRMAvatar({ started, audioUrl, stopIdle }: Props) {
         const headPos = new THREE.Vector3();
         headNode.getWorldPosition(headPos);
 
-        // Sit the camera ~0.5 units in front of the head
         camera.position.set(headPos.x, 0, headPos.z + 0.7);
         camera.lookAt(headPos.x, headPos.y, headPos.z);
       }
@@ -117,7 +134,7 @@ export default function VRMAvatar({ started, audioUrl, stopIdle }: Props) {
       idleActionRef.current = idleAction;
       activeActionRef.current = idleAction;
 
-      // Load the 3 random idle animations
+      // Load the random idle animations
       const loadedActions: THREE.AnimationAction[] = [];
 
       for (const file of IDLE_FBX_FILES) {
@@ -131,17 +148,50 @@ export default function VRMAvatar({ started, audioUrl, stopIdle }: Props) {
         action.setLoop(THREE.LoopOnce, 1);
         action.clampWhenFinished = true;
 
+        (action as any).name = file;
+
         loadedActions.push(action);
       }
 
       idleActionsRef.current = loadedActions;
 
-      // When any of the 3 finish, crossfade back to idle
+      // When any of the idle animations finish, crossfade back to idle
       mixer.addEventListener("finished", (e) => {
         if (loadedActions.includes(e.action as THREE.AnimationAction)) {
           returnToIdle();
         }
       });
+    });
+
+    const tryAttachPhone = (phone: THREE.Object3D) => {
+      const vrm = vrmRef.current;
+      if (!vrm) return false;
+
+      const rightHand = vrm.humanoid.getRawBoneNode("rightHand");
+      if (!rightHand) return false;
+
+      rightHand.add(phone);
+      return true;
+    };
+
+    const phoneLoader = new GLTFLoader();
+
+    phoneLoader.load("/phone.glb", (gltf) => {
+      const phone = gltf.scene;
+      phone.scale.set(0.2, 0.2, 0.2);
+      phone.visible = false;
+
+      phoneRef.current = phone;
+      phone.position.set(0.05, -0.01, -0.01);
+      phone.rotation.set(0, -0.7, 0);
+
+      const attached = tryAttachPhone(phone);
+      if (!attached) {
+        // retry next frame until VRM exists
+        const interval = setInterval(() => {
+          if (tryAttachPhone(phone)) clearInterval(interval);
+        }, 100);
+      }
     });
 
     return () => {
@@ -181,9 +231,7 @@ export default function VRMAvatar({ started, audioUrl, stopIdle }: Props) {
 
       audio.addEventListener("ended", () => {
         // Re-enable idle animations and reset the timer
-        isPlayingIdleAnimRef.current = false;
-        inactivityTimerRef.current = 0;
-        returnToIdle();
+        onAudioEnd();
       });
 
       await audio.play();
@@ -209,14 +257,19 @@ export default function VRMAvatar({ started, audioUrl, stopIdle }: Props) {
     if (humanoid) {
       const leftUpperArm = humanoid.getRawBoneNode("leftUpperArm");
       const rightUpperArm = humanoid.getRawBoneNode("rightUpperArm");
+      const metaL = vrm.humanoid.getRawBoneNode("leftThumbMetacarpal");
+      const metaR = humanoid.getRawBoneNode("rightThumbMetacarpal");
+
       if (leftUpperArm) leftUpperArm.rotation.z -= 0.2;
       if (rightUpperArm) rightUpperArm.rotation.z += 0.2;
+      if (metaL) metaL.rotation.x -= 0.35;
+      if (metaR) metaR.rotation.x -= 0.35;
     }
 
     // INACTIVITY → random idle animation
     // Don't trigger while speaking
     if (
-      !analyserRef.current &&
+      !stopIdle &&
       !isPlayingIdleAnimRef.current &&
       idleActionsRef.current.length > 0
     ) {
