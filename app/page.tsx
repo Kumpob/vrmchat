@@ -1,11 +1,14 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Canvas } from "@react-three/fiber";
 import { OrbitControls } from "@react-three/drei";
 
 import VRMAvatar from "@/components/VRMAvatar";
 import { ktts } from "@/components/kokoroTTS";
+import { aiResponse } from "@/components/aiResponse";
+import SettingModal from "@/components/SettingModal";
+import { chatMessage } from "@/components/interfaces";
 
 type SpeechRecognitionType = {
   start: () => void;
@@ -27,6 +30,68 @@ export default function Page() {
 
   const [loading, setLoading] = useState(false);
   const [listening, setListening] = useState(false);
+  const[settingModal, setSettingModal] = useState(false);
+  const[apiEndpoint, setApiEndpoint] = useState("");
+  const[apiKey, setApiKey] = useState("");
+  const[apiModel, setApiModel] = useState("");
+  const[apiPrompt, setApiPrompt] = useState("You are a chatbot.");
+  const[botName, setBotName] = useState("Kokoro");
+  const[botPersonality, setBotPersonality] = useState("");
+  const[yourName, setYourName] = useState("User");
+  const[yourPersonality, setYourPersonality] = useState("");
+  const[chatHistory, setChatHistory] = useState<chatMessage[]>([]);
+
+  //save and load api local storage
+  useEffect(() => {
+    const savedApiEndpoint = localStorage.getItem("apiEndpoint");
+    if (savedApiEndpoint) {
+      setApiEndpoint(savedApiEndpoint);
+    }
+    const savedApiKey = localStorage.getItem("apiKey");
+    if (savedApiKey) {
+      setApiKey(savedApiKey);
+    }
+    const savedApiModel = localStorage.getItem("apiModel");
+    if (savedApiModel) {
+      setApiModel(savedApiModel);
+    }
+    const savedApiPrompt = localStorage.getItem("apiPrompt");
+    if (savedApiPrompt) {
+      setApiPrompt(savedApiPrompt);
+    }
+    const savedBotName = localStorage.getItem("botName");
+    if (savedBotName) {
+      setBotName(savedBotName);
+    }
+    const savedBotPersonality = localStorage.getItem("botPersonality");
+    if (savedBotPersonality) {
+      setBotPersonality(savedBotPersonality);
+    }
+    const savedYourName = localStorage.getItem("yourName");
+    if (savedYourName) {
+      setYourName(savedYourName);
+    }
+    const savedYourPersonality = localStorage.getItem("yourPersonality");
+    if (savedYourPersonality) {
+      setYourPersonality(savedYourPersonality);
+    }
+    const savedChatHistory = localStorage.getItem("chatHistory");
+    if (savedChatHistory) {
+      setChatHistory(JSON.parse(savedChatHistory));
+    }
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem("apiEndpoint", apiEndpoint);
+    localStorage.setItem("apiKey", apiKey);
+    localStorage.setItem("apiModel", apiModel);
+    localStorage.setItem("apiPrompt", apiPrompt);
+    localStorage.setItem("botName", botName);
+    localStorage.setItem("botPersonality", botPersonality);
+    localStorage.setItem("yourName", yourName);
+    localStorage.setItem("yourPersonality", yourPersonality);
+    localStorage.setItem("chatHistory", JSON.stringify(chatHistory));
+  }, [apiEndpoint, apiKey, apiModel, apiPrompt, botPersonality, botName, yourName, yourPersonality, chatHistory]);
 
   const startListening = () => {
     const SpeechRecognition =
@@ -77,25 +142,47 @@ export default function Page() {
     }
 
     try {
-      setLoading(true); // START loading
+      setLoading(true);
+      console.time("myFunction");
+      if (!apiEndpoint.trim() || !apiKey.trim() || !apiModel.trim() || !apiPrompt.trim()) {
+        alert("Please set API in the settings");
+        return;
+      }
+      chatHistory.push({role: "user", content: text.trim()});
+      console.log(chatHistory);
+      let systemPrompt = apiPrompt;
+      if (botName.trim()) {
+        systemPrompt += "\n\nCharacter Name:" + botName;
+      }
+      if (botPersonality.trim()) {
+        systemPrompt += "\n\nCharacter Personality:" + botPersonality;
+      }
+      if (yourName.trim()) {
+        systemPrompt += "\n\nUser Name:" + yourName;
+      }
+      
+      if (yourPersonality.trim()) {
+        systemPrompt += "\n\nUser Description:" + yourPersonality;
+      }
 
-      const text2 = text.trim();
+      console.log(systemPrompt);
+      const text2 = await aiResponse(chatHistory, apiEndpoint, apiKey, apiModel, systemPrompt);
+      chatHistory.push({role: "assistant", content: text2.trim()});
       setText("");
       setStopIdle(true);
 
       console.log("saying:", text2);
-      console.time("myFunction");
       const url = await ktts(text2);
 
       console.log("got url", url);
 
       setAudioUrl(url);
       setStarted(true);
-      console.timeEnd("myFunction");
     } catch (err) {
       console.error(err);
     } finally {
-      setLoading(false); // STOP loading
+      console.timeEnd("myFunction");
+      setLoading(false);
     }
   };
 
@@ -140,6 +227,32 @@ export default function Page() {
         </div>
       )}
 
+      <div className="absolute top-4 right-4 z-50">
+        <button onClick={() => setSettingModal(true)} className="hover:scale-120">⚙️</button>
+      </div>
+      {
+        settingModal && <SettingModal
+          apiEndpoint={apiEndpoint}
+          setApiEndpoint={setApiEndpoint}
+          apiKey={apiKey}
+          setApiKey={setApiKey}
+          apiModel={apiModel}
+          setApiModel={setApiModel}
+          apiPrompt={apiPrompt}
+          setApiPrompt={setApiPrompt}
+          setSettingModal={setSettingModal}
+          botName={botName}
+          setBotName={setBotName}
+          botPersonality={botPersonality}
+          setBotPersonality={setBotPersonality}
+          yourName={yourName}
+          setYourName={setYourName}
+          yourPersonality={yourPersonality}
+          setYourPersonality={setYourPersonality}
+          setChatHistory={setChatHistory}
+        />
+      }
+
       {/* 3D CANVAS */}
       <Canvas camera={{ position: [0, 1.4, 3] }}>
         <ambientLight intensity={1} />
@@ -155,7 +268,7 @@ export default function Page() {
         <OrbitControls />
       </Canvas>
 
-      <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-1/2 m-4 gap-2 flex items-center">
+      <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-full lg:w-1/2 mb-4 lg:m-4 gap-2 flex items-center">
         <button
           onClick={listening ? stopListening : startListening}
           className="bg-blue-500 text-white px-4 py-3 rounded-full hover:bg-blue-600"
