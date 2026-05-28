@@ -31,6 +31,7 @@ type SettingModalProps = {
   setYourPersonality: React.Dispatch<React.SetStateAction<string>>;
 
   setChatHistory: React.Dispatch<React.SetStateAction<chatMessage[]>>;
+  setHistoryModal: React.Dispatch<React.SetStateAction<boolean>>;
 
   voice: voiceList;
   setVoice: React.Dispatch<React.SetStateAction<voiceList>>;
@@ -57,6 +58,7 @@ export default function SettingModal({
   yourPersonality,
   setYourPersonality,
   setChatHistory,
+  setHistoryModal,
   voice,
   setVoice,
   speed,
@@ -67,7 +69,8 @@ export default function SettingModal({
   >("AI");
   const [isLoading, setLoading] = useState(false);
   function clearChatHistory() {
-    setChatHistory([]);
+    confirm("Are you sure you want to clear the chat history?") &&
+      setChatHistory([]);
   }
   const previewTTS = async () => {
     setLoading(true);
@@ -95,48 +98,23 @@ export default function SettingModal({
           <div>Settings</div>
           <button onClick={() => setSettingModal(false)}>❌</button>
         </h2>
-        <div className="flex justify-between mb-4">
-          <div className="grid grid-cols-4">
+        <div className="flex w-full">
+          {(["AI", "Character", "User", "Chat"] as const).map((tab) => (
             <button
-              className={`px-4 py-2 rounded-lg ${
-                settingTabs === "AI" ? "bg-gray-200 dark:bg-neutral-700" : ""
+              key={tab}
+              className={`flex-1 text-center px-2 py-2 rounded-t-lg ${
+                settingTabs === tab ? "bg-gray-100 dark:bg-neutral-600" : ""
               }`}
-              onClick={() => setSettingTabs("AI")}
+              onClick={() => setSettingTabs(tab)}
             >
-              AI
+              {tab}
             </button>
-            <button
-              className={`px-4 py-2 rounded-lg ${
-                settingTabs === "Character"
-                  ? "bg-gray-200 dark:bg-neutral-700"
-                  : ""
-              }`}
-              onClick={() => setSettingTabs("Character")}
-            >
-              Character
-            </button>
-            <button
-              className={`px-4 py-2 rounded-lg ${
-                settingTabs === "User" ? "bg-gray-200 dark:bg-neutral-700" : ""
-              }`}
-              onClick={() => setSettingTabs("User")}
-            >
-              User
-            </button>
-            <button
-              className={`px-4 py-2 rounded-lg ${
-                settingTabs === "Chat" ? "bg-gray-200 dark:bg-neutral-700" : ""
-              }`}
-              onClick={() => setSettingTabs("Chat")}
-            >
-              Chat
-            </button>
-          </div>
+          ))}
         </div>
 
         {settingTabs === "AI" && (
           <>
-            <div className="bg-gray-100 dark:bg-neutral-600 p-2 rounded-lg mb-4">
+            <div className="bg-gray-100 dark:bg-neutral-600 p-2 rounded-b-lg rounded-tr-lg mb-4">
               <p className="font-semibold">API</p>
               <div className="mb-4">
                 <label className="block text-sm font-medium ">
@@ -173,6 +151,7 @@ export default function SettingModal({
                 </label>
                 <textarea
                   value={apiPrompt}
+                  rows={4}
                   onChange={(e) => setApiPrompt(e.target.value)}
                   className="mt-1 p-2 border rounded w-full"
                   placeholder="Enter the System prompt."
@@ -257,6 +236,7 @@ export default function SettingModal({
               <label className="block text-sm font-medium ">Description</label>
               <textarea
                 value={botPersonality}
+                rows={4}
                 onChange={(e) => setBotPersonality(e.target.value)}
                 className="mt-1 p-2 border rounded w-full"
                 placeholder="Enter the description of bot."
@@ -280,6 +260,7 @@ export default function SettingModal({
               <label className="block text-sm font-medium ">Description</label>
               <textarea
                 value={yourPersonality}
+                rows={4}
                 onChange={(e) => setYourPersonality(e.target.value)}
                 className="mt-1 p-2 border rounded w-full"
                 placeholder="Enter your description."
@@ -288,12 +269,21 @@ export default function SettingModal({
           </div>
         )}
         {settingTabs === "Chat" && (
-          <button
-            onClick={() => clearChatHistory()}
-            className="bg-red-500 hover:bg-red-600 text-white py-2 px-4 rounded w-full mb-4"
-          >
-            Clear History
-          </button>
+          <div className="bg-gray-100 dark:bg-neutral-600 p-2 rounded-b-lg rounded-tl-lg mb-4">
+            <p className="font-semibold mb-2">Chat</p>
+            <button
+              onClick={() => setHistoryModal(true)}
+              className="bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded w-full mb-4"
+            >
+              View History
+            </button>
+            <button
+              onClick={() => clearChatHistory()}
+              className="bg-red-500 hover:bg-red-600 text-white py-2 px-4 rounded w-full mb-4"
+            >
+              Clear History
+            </button>
+          </div>
         )}
       </div>
     </div>

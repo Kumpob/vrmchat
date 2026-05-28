@@ -10,6 +10,7 @@ import { aiResponse } from "@/components/aiResponse";
 import SettingModal from "@/components/SettingModal";
 import { chatMessage } from "@/components/interfaces";
 import { voiceList } from "@/components/voiceList";
+import HistoryModal from "@/components/historyModal";
 
 type SpeechRecognitionType = {
   start: () => void;
@@ -32,15 +33,20 @@ export default function Page() {
   const [loading, setLoading] = useState(false);
   const [listening, setListening] = useState(false);
   const [settingModal, setSettingModal] = useState(false);
+  const [historyModal, setHistoryModal] = useState(false);
+
   const [apiEndpoint, setApiEndpoint] = useState("");
   const [apiKey, setApiKey] = useState("");
   const [apiModel, setApiModel] = useState("");
   const [apiPrompt, setApiPrompt] = useState("You are a chatbot.");
+
   const [botName, setBotName] = useState("Kokoro");
   const [botPersonality, setBotPersonality] = useState("");
   const [yourName, setYourName] = useState("User");
   const [yourPersonality, setYourPersonality] = useState("");
+
   const [chatHistory, setChatHistory] = useState<chatMessage[]>([]);
+
   const [voice, setVoice] = useState<voiceList>("af_bella");
   const [speed, setSpeed] = useState(1.2);
 
@@ -174,35 +180,44 @@ export default function Page() {
         !apiEndpoint.trim() ||
         !apiKey.trim() ||
         !apiModel.trim() ||
-        !apiPrompt.trim()
+        !apiPrompt.trim() ||
+        !botName.trim() ||
+        !yourName.trim()
       ) {
         alert("Please set API in the settings");
         return;
       }
-      chatHistory.push({ role: "user", content: text.trim() });
+      const updatedHistory: chatMessage[] = [
+        ...chatHistory,
+        { role: "user", content: text.trim() },
+      ];
       let systemPrompt = apiPrompt;
-      if (botName.trim()) {
-        systemPrompt += "\n\nCharacter Name:" + botName;
-      }
+
+      systemPrompt += `\n\n<${botName}>Character Name:` + botName;
       if (botPersonality.trim()) {
         systemPrompt += "\n\nCharacter Personality:" + botPersonality;
       }
-      if (yourName.trim()) {
-        systemPrompt += "\n\nUser Name:" + yourName;
-      }
+      systemPrompt += `</${botName}>`;
+
+      systemPrompt += `\n\n<${yourName}>User Name:` + yourName;
 
       if (yourPersonality.trim()) {
         systemPrompt += "\n\nUser Description:" + yourPersonality;
       }
+      systemPrompt += `</${yourName}>\n\n`;
 
       const text2 = await aiResponse(
-        chatHistory,
+        updatedHistory,
         apiEndpoint,
         apiKey,
         apiModel,
         systemPrompt,
       );
-      chatHistory.push({ role: "assistant", content: text2.trim() });
+      const finalHistory: chatMessage[] = [
+        ...updatedHistory,
+        { role: "assistant", content: text2.trim() },
+      ];
+      setChatHistory(finalHistory);
       setText("");
       setStopIdle(true);
 
@@ -262,12 +277,19 @@ export default function Page() {
 
       <div className="absolute top-4 right-4 z-50">
         <button
+          onClick={() => setHistoryModal(true)}
+          className="hover:scale-240 scale-200 m-4"
+        >
+          🕑
+        </button>
+        <button
           onClick={() => setSettingModal(true)}
-          className="hover:scale-120"
+          className="hover:scale-240 scale-200 m-4"
         >
           ⚙️
         </button>
       </div>
+
       {settingModal && (
         <SettingModal
           apiEndpoint={apiEndpoint}
@@ -288,10 +310,21 @@ export default function Page() {
           yourPersonality={yourPersonality}
           setYourPersonality={setYourPersonality}
           setChatHistory={setChatHistory}
+          setHistoryModal={setHistoryModal}
           voice={voice}
           setVoice={setVoice}
           speed={speed}
           setSpeed={setSpeed}
+        />
+      )}
+
+      {historyModal && (
+        <HistoryModal
+          chatHistory={chatHistory}
+          setChatHistory={setChatHistory}
+          characterName={botName}
+          userName={yourName}
+          setHistoryModal={setHistoryModal}
         />
       )}
 

@@ -9,7 +9,6 @@ export const aiResponse = async (
   apiPrompt: string,
 ) => {
   const endpoint = apiEndpoint;
-  console.log(endpoint);
   if (!endpoint) {
     throw new Error("API_ENDPOINT is not defined");
   }
@@ -29,8 +28,6 @@ export const aiResponse = async (
 
   const result = await apiResponse.json();
   const message = result.choices[0].message;
-
-  console.log(message);
 
   return String(message.content);
 };
