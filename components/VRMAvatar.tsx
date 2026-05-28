@@ -64,9 +64,7 @@ export default function VRMAvatar({
     duration = 0.3,
   ) => {
     to.reset().play();
-    console.log((to as any).name);
     const isTexting = (to as any).name === "texting.fbx";
-    console.log(isTexting);
     // toggle phone
     if (phoneRef.current) {
       phoneRef.current.visible = isTexting;

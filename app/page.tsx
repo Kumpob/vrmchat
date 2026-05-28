@@ -9,6 +9,7 @@ import { ktts } from "@/components/kokoroTTS";
 import { aiResponse } from "@/components/aiResponse";
 import SettingModal from "@/components/SettingModal";
 import { chatMessage } from "@/components/interfaces";
+import { voiceList } from "@/components/voiceList";
 
 type SpeechRecognitionType = {
   start: () => void;
@@ -40,6 +41,8 @@ export default function Page() {
   const[yourName, setYourName] = useState("User");
   const[yourPersonality, setYourPersonality] = useState("");
   const[chatHistory, setChatHistory] = useState<chatMessage[]>([]);
+  const[voice, setVoice] = useState<voiceList>("af_bella");
+  const[speed, setSpeed] = useState(1.2);
 
   //save and load api local storage
   useEffect(() => {
@@ -79,6 +82,15 @@ export default function Page() {
     if (savedChatHistory) {
       setChatHistory(JSON.parse(savedChatHistory));
     }
+
+    const savedVoice = localStorage.getItem("voice");
+    if (savedVoice) {
+      setVoice(savedVoice as voiceList);
+    }
+    const savedSpeed = localStorage.getItem("speed");
+    if (savedSpeed) {
+      setSpeed(parseFloat(savedSpeed));
+    }
   }, []);
 
   useEffect(() => {
@@ -91,7 +103,9 @@ export default function Page() {
     localStorage.setItem("yourName", yourName);
     localStorage.setItem("yourPersonality", yourPersonality);
     localStorage.setItem("chatHistory", JSON.stringify(chatHistory));
-  }, [apiEndpoint, apiKey, apiModel, apiPrompt, botPersonality, botName, yourName, yourPersonality, chatHistory]);
+    localStorage.setItem("voice", voice);
+    localStorage.setItem("speed", speed.toString());
+  }, [apiEndpoint, apiKey, apiModel, apiPrompt, botPersonality, botName, yourName, yourPersonality, chatHistory, voice, speed]);
 
   const startListening = () => {
     const SpeechRecognition =
@@ -149,7 +163,6 @@ export default function Page() {
         return;
       }
       chatHistory.push({role: "user", content: text.trim()});
-      console.log(chatHistory);
       let systemPrompt = apiPrompt;
       if (botName.trim()) {
         systemPrompt += "\n\nCharacter Name:" + botName;
@@ -165,16 +178,13 @@ export default function Page() {
         systemPrompt += "\n\nUser Description:" + yourPersonality;
       }
 
-      console.log(systemPrompt);
       const text2 = await aiResponse(chatHistory, apiEndpoint, apiKey, apiModel, systemPrompt);
       chatHistory.push({role: "assistant", content: text2.trim()});
       setText("");
       setStopIdle(true);
 
       console.log("saying:", text2);
-      const url = await ktts(text2);
-
-      console.log("got url", url);
+      const url = await ktts(text2, voice, speed);
 
       setAudioUrl(url);
       setStarted(true);
@@ -250,6 +260,10 @@ export default function Page() {
           yourPersonality={yourPersonality}
           setYourPersonality={setYourPersonality}
           setChatHistory={setChatHistory}
+          voice={voice}
+          setVoice={setVoice}
+          speed={speed}
+          setSpeed={setSpeed}
         />
       }
 

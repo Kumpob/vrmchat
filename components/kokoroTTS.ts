@@ -1,4 +1,5 @@
 import { KokoroTTS } from "kokoro-js";
+import { voiceList } from "./voiceList";
 
 let tts: KokoroTTS | null = null;
 
@@ -12,7 +13,7 @@ export async function getTTS() {
   return tts;
 }
 
-export async function ktts(text: string): Promise<string> {
+export async function ktts(text: string, voice: voiceList, speed: number): Promise<string> {
   return new Promise((resolve, reject) => {
     const worker = new Worker(new URL("./tts.worker.ts", import.meta.url), {
       type: "module",
@@ -29,6 +30,6 @@ export async function ktts(text: string): Promise<string> {
       reject(err);
     };
 
-    worker.postMessage({ text });
+    worker.postMessage({ text, voice, speed });
   });
 }
