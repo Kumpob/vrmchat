@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
 
 import * as THREE from "three";
@@ -34,6 +34,7 @@ export default function VRMAvatar({
   onAudioEnd,
 }: Props) {
   const vrmRef = useRef<VRM | null>(null);
+  const [vrm, setVrm] = useState<VRM | null>(null);
   const mixerRef = useRef<THREE.AnimationMixer | null>(null);
   const phoneRef = useRef<THREE.Object3D | null>(null);
 
@@ -110,6 +111,7 @@ export default function VRMAvatar({
 
       vrm.scene.rotation.y = Math.PI;
       vrmRef.current = vrm;
+      setVrm(vrm);
 
       // Camera
       const headNode = vrm.humanoid.getRawBoneNode("head");
@@ -325,7 +327,7 @@ export default function VRMAvatar({
     }
   });
 
-  return vrmRef.current ? (
-    <primitive object={vrmRef.current.scene} position={[0, -1, 0]} />
-  ) : null;
+  return vrm ? (
+  <primitive object={vrm.scene} position={[0, -1, 0]} />
+) : null;
 }
