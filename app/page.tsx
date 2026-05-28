@@ -44,6 +44,9 @@ export default function Page() {
   const [botPersonality, setBotPersonality] = useState("");
   const [yourName, setYourName] = useState("User");
   const [yourPersonality, setYourPersonality] = useState("");
+  const [yourPronouns1, setYourPronouns1] = useState("");
+  const [yourPronouns2, setYourPronouns2] = useState("");
+  const [yourPronouns3, setYourPronouns3] = useState("");
 
   const [chatHistory, setChatHistory] = useState<chatMessage[]>([]);
 
@@ -84,6 +87,19 @@ export default function Page() {
     if (savedYourPersonality) {
       setYourPersonality(savedYourPersonality);
     }
+    const savedYourPronouns1 = localStorage.getItem("yourPronouns1");
+    if (savedYourPronouns1) {
+      setYourPronouns1(savedYourPronouns1);
+    }
+    const savedYourPronouns2 = localStorage.getItem("yourPronouns2");
+    if (savedYourPronouns2) {
+      setYourPronouns2(savedYourPronouns2);
+    }
+    const savedYourPronouns3 = localStorage.getItem("yourPronouns3");
+    if (savedYourPronouns3) {
+      setYourPronouns3(savedYourPronouns3);
+    }
+
     const savedChatHistory = localStorage.getItem("chatHistory");
     if (savedChatHistory) {
       setChatHistory(JSON.parse(savedChatHistory));
@@ -108,6 +124,9 @@ export default function Page() {
     localStorage.setItem("botPersonality", botPersonality);
     localStorage.setItem("yourName", yourName);
     localStorage.setItem("yourPersonality", yourPersonality);
+    localStorage.setItem("yourPronouns1", yourPronouns1);
+    localStorage.setItem("yourPronouns2", yourPronouns2);
+    localStorage.setItem("yourPronouns3", yourPronouns3);
     localStorage.setItem("chatHistory", JSON.stringify(chatHistory));
     localStorage.setItem("voice", voice);
     localStorage.setItem("speed", speed.toString());
@@ -120,6 +139,9 @@ export default function Page() {
     botName,
     yourName,
     yourPersonality,
+    yourPronouns1,
+    yourPronouns2,
+    yourPronouns3,
     chatHistory,
     voice,
     speed,
@@ -167,6 +189,58 @@ export default function Page() {
     setListening(false);
   };
 
+  const timeOfDay = () => {
+    const hours = new Date().getHours();
+    if (hours >= 5 && hours < 8) {
+      return "Early Morning";
+    }
+    if (hours >= 8 && hours < 10) {
+      return "Morning";
+    }
+    if (hours >= 10 && hours < 12) {
+      return "Late Morning";
+    }
+    if (hours >= 12 && hours < 17) {
+      return "Afternoon";
+    }
+    if (hours >= 17 && hours < 21) {
+      return "Evening";
+    }
+    if (hours >= 21 && hours < 24) {
+      return "Night";
+    }
+    return "Late Night";
+  };
+
+  const dayOfWeek = () => {
+    const days = [
+      "Sunday",
+      "Monday",
+      "Tuesday",
+      "Wednesday",
+      "Thursday",
+      "Friday",
+      "Saturday",
+    ];
+    return days[new Date().getDay()];
+  };
+
+  const getSeason = () => {
+    const month = new Date().getMonth();
+    if (month >= 0 && month < 3) {
+      return "Winter";
+    }
+    if (month >= 3 && month < 6) {
+      return "Spring";
+    }
+    if (month >= 6 && month < 9) {
+      return "Summer";
+    }
+    if (month >= 9 && month < 12) {
+      return "Fall";
+    }
+    return "Winter";
+  };
   const start_tts = async () => {
     if (text.trim() == "") {
       console.log("no text");
@@ -193,6 +267,8 @@ export default function Page() {
       ];
       let systemPrompt = apiPrompt;
 
+      systemPrompt += `\n\n<time>Day of Week: ${dayOfWeek()}\n\nTime: ${new Date().getHours()}\n\nTime of Day: ${timeOfDay()}\n\nSeason: ${getSeason()}</time>`;
+
       systemPrompt += `\n\n<${botName}>Character Name:` + botName;
       if (botPersonality.trim()) {
         systemPrompt += "\n\nCharacter Personality:" + botPersonality;
@@ -200,12 +276,18 @@ export default function Page() {
       systemPrompt += `</${botName}>`;
 
       systemPrompt += `\n\n<${yourName}>User Name:` + yourName;
-
       if (yourPersonality.trim()) {
         systemPrompt += "\n\nUser Description:" + yourPersonality;
       }
+      if (
+        yourPronouns1.trim() ||
+        yourPronouns2.trim() ||
+        yourPronouns3.trim()
+      ) {
+        systemPrompt += `\n\nUser Pronouns: ${yourPronouns1}/${yourPronouns2}/${yourPronouns3}`;
+      }
       systemPrompt += `</${yourName}>\n\n`;
-
+      console.log("prompt:", systemPrompt);
       const text2 = await aiResponse(
         updatedHistory,
         apiEndpoint,
@@ -309,6 +391,12 @@ export default function Page() {
           setYourName={setYourName}
           yourPersonality={yourPersonality}
           setYourPersonality={setYourPersonality}
+          yourPronouns1={yourPronouns1}
+          setYourPronouns1={setYourPronouns1}
+          yourPronouns2={yourPronouns2}
+          setYourPronouns2={setYourPronouns2}
+          yourPronouns3={yourPronouns3}
+          setYourPronouns3={setYourPronouns3}
           setChatHistory={setChatHistory}
           setHistoryModal={setHistoryModal}
           voice={voice}

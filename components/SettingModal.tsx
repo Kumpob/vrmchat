@@ -30,6 +30,13 @@ type SettingModalProps = {
   yourPersonality: string;
   setYourPersonality: React.Dispatch<React.SetStateAction<string>>;
 
+  yourPronouns1: string;
+  setYourPronouns1: React.Dispatch<React.SetStateAction<string>>;
+  yourPronouns2: string;
+  setYourPronouns2: React.Dispatch<React.SetStateAction<string>>;
+  yourPronouns3: string;
+  setYourPronouns3: React.Dispatch<React.SetStateAction<string>>;
+
   setChatHistory: React.Dispatch<React.SetStateAction<chatMessage[]>>;
   setHistoryModal: React.Dispatch<React.SetStateAction<boolean>>;
 
@@ -57,6 +64,12 @@ export default function SettingModal({
   setYourName,
   yourPersonality,
   setYourPersonality,
+  yourPronouns1,
+  setYourPronouns1,
+  yourPronouns2,
+  setYourPronouns2,
+  yourPronouns3,
+  setYourPronouns3,
   setChatHistory,
   setHistoryModal,
   voice,
@@ -255,6 +268,32 @@ export default function SettingModal({
                 onChange={(e) => setYourName(e.target.value)}
                 className="mt-1 p-2 border rounded w-full"
               />
+            </div>
+            <div className="mb-4">
+              <label className="block text-sm font-medium ">Pronouns</label>
+              <div className="flex gap-2 justify-between">
+                <input
+                  type="text"
+                  value={yourPronouns1}
+                  onChange={(e) => setYourPronouns1(e.target.value)}
+                  className="mt-1 p-2 border rounded w-full"
+                  placeholder="he"
+                />
+                <input
+                  type="text"
+                  value={yourPronouns2}
+                  onChange={(e) => setYourPronouns2(e.target.value)}
+                  className="mt-1 p-2 border rounded w-full"
+                  placeholder="his"
+                />
+                <input
+                  type="text"
+                  value={yourPronouns3}
+                  onChange={(e) => setYourPronouns3(e.target.value)}
+                  className="mt-1 p-2 border rounded w-full"
+                  placeholder="him"
+                />
+              </div>
             </div>
             <div className="mb-4">
               <label className="block text-sm font-medium ">Description</label>
