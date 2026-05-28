@@ -31,18 +31,18 @@ export default function Page() {
 
   const [loading, setLoading] = useState(false);
   const [listening, setListening] = useState(false);
-  const[settingModal, setSettingModal] = useState(false);
-  const[apiEndpoint, setApiEndpoint] = useState("");
-  const[apiKey, setApiKey] = useState("");
-  const[apiModel, setApiModel] = useState("");
-  const[apiPrompt, setApiPrompt] = useState("You are a chatbot.");
-  const[botName, setBotName] = useState("Kokoro");
-  const[botPersonality, setBotPersonality] = useState("");
-  const[yourName, setYourName] = useState("User");
-  const[yourPersonality, setYourPersonality] = useState("");
-  const[chatHistory, setChatHistory] = useState<chatMessage[]>([]);
-  const[voice, setVoice] = useState<voiceList>("af_bella");
-  const[speed, setSpeed] = useState(1.2);
+  const [settingModal, setSettingModal] = useState(false);
+  const [apiEndpoint, setApiEndpoint] = useState("");
+  const [apiKey, setApiKey] = useState("");
+  const [apiModel, setApiModel] = useState("");
+  const [apiPrompt, setApiPrompt] = useState("You are a chatbot.");
+  const [botName, setBotName] = useState("Kokoro");
+  const [botPersonality, setBotPersonality] = useState("");
+  const [yourName, setYourName] = useState("User");
+  const [yourPersonality, setYourPersonality] = useState("");
+  const [chatHistory, setChatHistory] = useState<chatMessage[]>([]);
+  const [voice, setVoice] = useState<voiceList>("af_bella");
+  const [speed, setSpeed] = useState(1.2);
 
   //save and load api local storage
   useEffect(() => {
@@ -105,7 +105,19 @@ export default function Page() {
     localStorage.setItem("chatHistory", JSON.stringify(chatHistory));
     localStorage.setItem("voice", voice);
     localStorage.setItem("speed", speed.toString());
-  }, [apiEndpoint, apiKey, apiModel, apiPrompt, botPersonality, botName, yourName, yourPersonality, chatHistory, voice, speed]);
+  }, [
+    apiEndpoint,
+    apiKey,
+    apiModel,
+    apiPrompt,
+    botPersonality,
+    botName,
+    yourName,
+    yourPersonality,
+    chatHistory,
+    voice,
+    speed,
+  ]);
 
   const startListening = () => {
     const SpeechRecognition =
@@ -158,11 +170,16 @@ export default function Page() {
     try {
       setLoading(true);
       console.time("myFunction");
-      if (!apiEndpoint.trim() || !apiKey.trim() || !apiModel.trim() || !apiPrompt.trim()) {
+      if (
+        !apiEndpoint.trim() ||
+        !apiKey.trim() ||
+        !apiModel.trim() ||
+        !apiPrompt.trim()
+      ) {
         alert("Please set API in the settings");
         return;
       }
-      chatHistory.push({role: "user", content: text.trim()});
+      chatHistory.push({ role: "user", content: text.trim() });
       let systemPrompt = apiPrompt;
       if (botName.trim()) {
         systemPrompt += "\n\nCharacter Name:" + botName;
@@ -173,13 +190,19 @@ export default function Page() {
       if (yourName.trim()) {
         systemPrompt += "\n\nUser Name:" + yourName;
       }
-      
+
       if (yourPersonality.trim()) {
         systemPrompt += "\n\nUser Description:" + yourPersonality;
       }
 
-      const text2 = await aiResponse(chatHistory, apiEndpoint, apiKey, apiModel, systemPrompt);
-      chatHistory.push({role: "assistant", content: text2.trim()});
+      const text2 = await aiResponse(
+        chatHistory,
+        apiEndpoint,
+        apiKey,
+        apiModel,
+        systemPrompt,
+      );
+      chatHistory.push({ role: "assistant", content: text2.trim() });
       setText("");
       setStopIdle(true);
 
@@ -238,10 +261,15 @@ export default function Page() {
       )}
 
       <div className="absolute top-4 right-4 z-50">
-        <button onClick={() => setSettingModal(true)} className="hover:scale-120">⚙️</button>
+        <button
+          onClick={() => setSettingModal(true)}
+          className="hover:scale-120"
+        >
+          ⚙️
+        </button>
       </div>
-      {
-        settingModal && <SettingModal
+      {settingModal && (
+        <SettingModal
           apiEndpoint={apiEndpoint}
           setApiEndpoint={setApiEndpoint}
           apiKey={apiKey}
@@ -265,7 +293,7 @@ export default function Page() {
           speed={speed}
           setSpeed={setSpeed}
         />
-      }
+      )}
 
       {/* 3D CANVAS */}
       <Canvas camera={{ position: [0, 1.4, 3] }}>

@@ -325,7 +325,5 @@ export default function VRMAvatar({
     }
   });
 
-  return vrm ? (
-  <primitive object={vrm.scene} position={[0, -1, 0]} />
-) : null;
+  return vrm ? <primitive object={vrm.scene} position={[0, -1, 0]} /> : null;
 }

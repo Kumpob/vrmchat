@@ -75,7 +75,6 @@ export default function SettingModal({
     const audio = new Audio(url);
     audio.onended = () => setLoading(false);
     audio.play();
-
   };
   return (
     <div
@@ -231,7 +230,12 @@ export default function SettingModal({
                 </div>
               </div>
               <div>
-                <button onClick={() => previewTTS()} className="bg-green-500 hover:bg-green-600 text-white py-2 px-4 rounded w-full mb-4">{isLoading? "Generating":"Preview"}</button>
+                <button
+                  onClick={() => previewTTS()}
+                  className="bg-green-500 hover:bg-green-600 text-white py-2 px-4 rounded w-full mb-4"
+                >
+                  {isLoading ? "Generating" : "Preview"}
+                </button>
               </div>
             </div>
           </>

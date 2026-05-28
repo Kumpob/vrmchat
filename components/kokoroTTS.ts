@@ -13,7 +13,11 @@ export async function getTTS() {
   return tts;
 }
 
-export async function ktts(text: string, voice: voiceList, speed: number): Promise<string> {
+export async function ktts(
+  text: string,
+  voice: voiceList,
+  speed: number,
+): Promise<string> {
   return new Promise((resolve, reject) => {
     const worker = new Worker(new URL("./tts.worker.ts", import.meta.url), {
       type: "module",

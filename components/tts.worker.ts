@@ -1,7 +1,9 @@
 import { getTTS } from "./kokoroTTS";
 import { voiceList } from "./voiceList";
 
-self.onmessage = async (e: MessageEvent<{ text: string, voice: voiceList, speed: number }>) => {
+self.onmessage = async (
+  e: MessageEvent<{ text: string; voice: voiceList; speed: number }>,
+) => {
   const { text, voice, speed } = e.data;
 
   const model = await getTTS();
