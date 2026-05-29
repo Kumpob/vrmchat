@@ -117,7 +117,7 @@ export default function VRMAvatar({
         const headPos = new THREE.Vector3();
         headNode.getWorldPosition(headPos);
 
-        camera.position.set(headPos.x, 0, headPos.z + 0.7);
+        camera.position.set(headPos.x, 0.2, headPos.z + 0.7);
         camera.lookAt(headPos.x, headPos.y, headPos.z);
       }
 

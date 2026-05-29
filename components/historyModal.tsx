@@ -40,6 +40,12 @@ export default function HistoryModal({
     });
   }
 
+  function handleDelete(index: number) {
+    confirm(
+      "Are you sure you want to delete this message and everything after it?",
+    ) && setChatHistory((prev) => prev.slice(0, index));
+  }
+
   return (
     <>
       <div
@@ -87,11 +93,19 @@ export default function HistoryModal({
                       onClick={() =>
                         navigator.clipboard.writeText(message.content)
                       }
+                      className="cursor-pointer"
                     >
                       📋
                     </button>
-                    <button onClick={() => setEditTarget({ message, index })}>
+                    <button onClick={() => setEditTarget({ message, index })} className="cursor-pointer">
                       ✏️
+                    </button>
+                    <button
+                      onClick={() => handleDelete(index)}
+                      disabled={message.role !== "user"}
+                      className={message.role !== "user" ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}
+                    >
+                      🗑️
                     </button>
                   </div>
                 </div>

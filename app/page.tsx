@@ -447,7 +447,7 @@ export default function Page() {
           onAudioEnd={on_audio_end}
         />
 
-        <OrbitControls />
+        <OrbitControls target={[0.03, 0, 0]} />
       </Canvas>
       <div className="absolute bottom-1/7 left-1/2 -translate-x-1/2 w-7/8 lg:w-1/2 mb-4 lg:m-4 gap-2 flex items-center justify-center">
         <p className="text-sm bg-black/50 text-center w-full">{subtitle}</p>
