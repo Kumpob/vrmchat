@@ -1,36 +1,109 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# VRMChat
+
+A browser-based 3D AI chatbot that renders a VRM avatar with voice conversation, lip-sync, and animations.
+
+## Features
+
+- **3D VRM Avatar** — Loads and displays VRM 3D models with Three.js and @pixiv/three-vrm
+- **AI Chat** — Connects to any OpenAI-compatible chat API for conversational responses
+- **Text-to-Speech** — Client-side TTS via Kokoro (82M ONNX model running in a Web Worker) with 28 voices and adjustable speed
+- **Speech-to-Text** — Voice input using the browser's built-in SpeechRecognition API
+- **Lip Sync** — Real-time audio analysis maps volume to the avatar's mouth movements
+- **Idle Animations** — Automatic random animations (texting, looking around) after 10s of inactivity
+- **Eye Blinking** — Natural random eye-blink animation
+- **Customizable Profiles** — Configure bot name, personality, user name, pronouns, and descriptions
+- **Contextual Awareness** — System prompt injects current time, day, and season
+- **Chat History** — Persistent conversation history with message editing, stored in localStorage
+- **Settings UI** — Modal-based configuration for API, character, user, and TTS settings
+
+## Tech Stack
+
+| Layer | Technology |
+|---|---|
+| Framework | Next.js 16 |
+| Language | TypeScript |
+| UI | Tailwind CSS v4 |
+| 3D | Three.js, @react-three/fiber, @pixiv/three-vrm |
+| TTS | kokoro-js (Kokoro-82M-ONNX, quantized q8) |
+| Linting | ESLint 9 |
 
 ## Getting Started
 
-First, run the development server:
+### Prerequisites
+
+- Node.js (compatible with Next.js 16)
+- npm, yarn, pnpm, or bun
+
+### Installation
+
+```bash
+git clone https://github.com/Kumpob/vrmchat.git
+cd vrmchat
+npm install
+```
+
+### Development
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### Production
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+npm run build
+npm start
+```
 
-## Learn More
+## Usage
 
-To learn more about Next.js, take a look at the following resources:
+1. Open the app and click the **gear icon** (top right) to open Settings.
+2. In the **AI** tab, configure:
+   - **API Endpoint** — Your OpenAI-compatible `/v1/chat/completions` URL
+   - **API Key** — Your API key
+   - **API Model** — Model name (e.g. `gpt-4o`)
+   - **System Prompt** — Instructions for the AI's behavior
+3. Optionally configure:
+   - **Character** tab — Bot name and personality
+   - **User** tab — Your name, description, and pronouns
+   - **TTS** voice and playback speed in the AI tab
+4. Type a message or click the microphone to speak. The avatar will respond with voice and lip movement.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Project Structure
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```
+app/
+├── layout.tsx          # Root layout with fonts and metadata
+├── page.tsx            # Main application (chat UI, 3D canvas, state)
+└── globals.css         # Global styles (Tailwind + CSS variables)
 
-## Deploy on Vercel
+components/
+├── VRMAvatar.tsx       # 3D avatar rendering, animations, lip-sync
+├── aiResponse.ts       # OpenAI-compatible API client
+├── kokoroTTS.ts        # TTS engine wrapper
+├── tts.worker.ts       # Web Worker for TTS inference
+├── voiceList.ts        # Available Kokoro voices
+├── interfaces.ts       # Chat message types
+├── SettingModal.tsx     # Settings modal (AI, Character, User tabs)
+├── historyModal.tsx     # Chat history viewer/editor
+├── EditMessageModal.tsx # Message editor modal
+├── loadMixamoAnimation.js  # Mixamo FBX → VRM animation converter
+└── mixamoVRMRigMap.js      # Mixamo → VRM bone mapping
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+public/
+├── avatar.vrm          # Default VRM avatar model
+├── idle.fbx            # Idle animation
+├── texting.fbx         # Texting animation
+├── looking.fbx         # Looking around animation
+└── phone.glb           # 3D phone prop
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Custom Avatar
+
+Replace `public/avatar.vrm` with your own VRM model. The animations and lip-sync will work with any VRM 0.x or 1.0 humanoid avatar.
+
+## License
+
+[MIT](LICENSE) — Copyright 2026 Kumpob
