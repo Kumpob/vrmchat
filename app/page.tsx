@@ -29,6 +29,8 @@ export default function Page() {
   const recognitionRef = useRef<SpeechRecognitionType | null>(null);
   const [audioUrl, setAudioUrl] = useState("");
   const [stopIdle, setStopIdle] = useState(false);
+  const [subtitle, setSubtitle] = useState("");
+  const [isSpeaking, setIsSpeaking] = useState(false);
 
   const [loading, setLoading] = useState(false);
   const [listening, setListening] = useState(false);
@@ -319,6 +321,8 @@ export default function Page() {
 
       setAudioUrl(url);
       setStarted(true);
+      setSubtitle(text2);
+      setIsSpeaking(true);
     } catch (err) {
       console.error(err);
     } finally {
@@ -329,6 +333,8 @@ export default function Page() {
 
   const on_audio_end = () => {
     setStopIdle(false);
+    setSubtitle("");
+    setIsSpeaking(false);
     console.log("audio ended");
   };
 
@@ -443,7 +449,9 @@ export default function Page() {
 
         <OrbitControls />
       </Canvas>
-
+      <div className="absolute bottom-1/7 left-1/2 -translate-x-1/2 w-7/8 lg:w-1/2 mb-4 lg:m-4 gap-2 flex items-center justify-center">
+        <p className="text-sm bg-black/50 text-center w-full">{subtitle}</p>
+      </div>
       <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-full lg:w-1/2 mb-4 lg:m-4 gap-2 flex items-center">
         <button
           onClick={listening ? stopListening : startListening}
