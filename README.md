@@ -65,6 +65,8 @@ npm start
    - **API Key** — Your API key
    - **API Model** — Model name (e.g. `gpt-4o`)
    - **System Prompt** — Instructions for the AI's behavior
+> [!NOTE]
+> If you are using LM Studio, make sure to enable CORS in the server settings.
 3. Optionally configure:
    - **Character** tab — Bot name and personality
    - **User** tab — Your name, description, and pronouns
