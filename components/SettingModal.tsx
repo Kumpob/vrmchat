@@ -44,6 +44,9 @@ type SettingModalProps = {
   setVoice: React.Dispatch<React.SetStateAction<voiceList>>;
   speed: number;
   setSpeed: React.Dispatch<React.SetStateAction<number>>;
+
+  includeTime: boolean;
+  setIncludeTime: React.Dispatch<React.SetStateAction<boolean>>;
 };
 
 export default function SettingModal({
@@ -76,6 +79,8 @@ export default function SettingModal({
   setVoice,
   speed,
   setSpeed,
+  includeTime,
+  setIncludeTime,
 }: SettingModalProps) {
   const [settingTabs, setSettingTabs] = useState<
     "AI" | "Character" | "User" | "Chat"
@@ -310,6 +315,22 @@ export default function SettingModal({
         {settingTabs === "Chat" && (
           <div className="bg-gray-100 dark:bg-neutral-600 p-2 rounded-b-lg rounded-tl-lg mb-4">
             <p className="font-semibold mb-2">Chat</p>
+            <div className="mb-4 flex items-center justify-between">
+              <label className="text-sm font-medium">Include Time?</label>
+              <button
+                type="button"
+                onClick={() => setIncludeTime(!includeTime)}
+                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                  includeTime ? "bg-blue-600" : "bg-gray-300"
+                }`}
+              >
+                <span
+                  className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                    includeTime ? "translate-x-6" : "translate-x-1"
+                  }`}
+                />
+              </button>
+            </div>
             <button
               onClick={() => setHistoryModal(true)}
               className="bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded w-full mb-4"

@@ -53,6 +53,8 @@ export default function Page() {
   const [voice, setVoice] = useState<voiceList>("af_bella");
   const [speed, setSpeed] = useState(1.2);
 
+  const [includeTime, setIncludeTime] = useState(true);
+
   //save and load api local storage
   useEffect(() => {
     const savedApiEndpoint = localStorage.getItem("apiEndpoint");
@@ -113,6 +115,11 @@ export default function Page() {
     if (savedSpeed) {
       setSpeed(parseFloat(savedSpeed));
     }
+
+    const savedIncludeTime = localStorage.getItem("includeTime");
+    if (savedIncludeTime) {
+      setIncludeTime(savedIncludeTime === "true");
+    }
   }, []);
 
   useEffect(() => {
@@ -130,6 +137,7 @@ export default function Page() {
     localStorage.setItem("chatHistory", JSON.stringify(chatHistory));
     localStorage.setItem("voice", voice);
     localStorage.setItem("speed", speed.toString());
+    localStorage.setItem("includeTime", includeTime.toString());
   }, [
     apiEndpoint,
     apiKey,
@@ -145,6 +153,7 @@ export default function Page() {
     chatHistory,
     voice,
     speed,
+    includeTime,
   ]);
 
   const startListening = () => {
@@ -267,7 +276,9 @@ export default function Page() {
       ];
       let systemPrompt = apiPrompt;
 
-      systemPrompt += `\n\n<time>Day of Week: ${dayOfWeek()}\n\nTime: ${new Date().getHours()}\n\nTime of Day: ${timeOfDay()}\n\nSeason: ${getSeason()}</time>`;
+      if (includeTime) {
+        systemPrompt += `\n\n<time>Day of Week: ${dayOfWeek()}\n\nTime: ${new Date().toLocaleTimeString()}\n\nTime of Day: ${timeOfDay()}\n\nSeason: ${getSeason()}</time>`;
+      }
 
       systemPrompt += `\n\n<${botName}>Character Name:` + botName;
       if (botPersonality.trim()) {
@@ -403,6 +414,8 @@ export default function Page() {
           setVoice={setVoice}
           speed={speed}
           setSpeed={setSpeed}
+          includeTime={includeTime}
+          setIncludeTime={setIncludeTime}
         />
       )}
 
