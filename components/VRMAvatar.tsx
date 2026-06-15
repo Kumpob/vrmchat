@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { useFrame, useThree } from "@react-three/fiber";
+import { useFrame } from "@react-three/fiber";
 
 import * as THREE from "three";
 
@@ -21,6 +21,15 @@ type Props = {
   audioUrl: string;
   stopIdle: boolean;
   onAudioEnd: () => void | undefined;
+  vrmUrl: string;
+  modelPosX: number;
+  modelPosY: number;
+  modelPosZ: number;
+  modelRotY: number;
+  leftArmZ: number;
+  rightArmZ: number;
+  leftThumbX: number;
+  rightThumbX: number;
 };
 
 const IDLE_FBX_FILES = ["texting.fbx", "looking.fbx"];
@@ -32,6 +41,15 @@ export default function VRMAvatar({
   audioUrl,
   stopIdle,
   onAudioEnd,
+  vrmUrl,
+  modelPosX,
+  modelPosY,
+  modelPosZ,
+  modelRotY,
+  leftArmZ,
+  rightArmZ,
+  leftThumbX,
+  rightThumbX,
 }: Props) {
   const vrmRef = useRef<VRM | null>(null);
   const [vrm, setVrm] = useState<VRM | null>(null);
@@ -55,8 +73,6 @@ export default function VRMAvatar({
   // Audio
   const analyserRef = useRef<AnalyserNode | null>(null);
   const dataArrayRef = useRef<Uint8Array<ArrayBuffer> | null>(null);
-
-  const { camera } = useThree();
 
   const crossFadeTo = (
     from: THREE.AnimationAction | null,
@@ -104,22 +120,24 @@ export default function VRMAvatar({
 
     gltfLoader.register((parser) => new VRMLoaderPlugin(parser));
 
-    gltfLoader.load("/avatar.vrm", async (gltf) => {
+    // Stop old mixer actions before loading new model
+    mixerRef.current?.stopAllAction();
+    mixerRef.current = null;
+    idleActionRef.current = null;
+    activeActionRef.current = null;
+    idleActionsRef.current = [];
+    isPlayingIdleAnimRef.current = false;
+    inactivityTimerRef.current = 0;
+    analyserRef.current = null;
+    dataArrayRef.current = null;
+
+    gltfLoader.load(vrmUrl, async (gltf) => {
       const vrm = gltf.userData.vrm as VRM;
 
-      vrm.scene.rotation.y = Math.PI;
+      vrm.scene.rotation.y = Math.PI + modelRotY;
+      vrm.scene.position.set(modelPosX, modelPosY, modelPosZ);
       vrmRef.current = vrm;
       setVrm(vrm);
-
-      // Camera
-      const headNode = vrm.humanoid.getRawBoneNode("head");
-      if (headNode) {
-        const headPos = new THREE.Vector3();
-        headNode.getWorldPosition(headPos);
-
-        camera.position.set(headPos.x, 0.2, headPos.z + 0.7);
-        camera.lookAt(headPos.x, headPos.y, headPos.z);
-      }
 
       const mixer = new THREE.AnimationMixer(vrm.scene);
       mixerRef.current = mixer;
@@ -161,6 +179,14 @@ export default function VRMAvatar({
           returnToIdle();
         }
       });
+
+      // Re-attach phone to new VRM's right hand if already loaded
+      if (phoneRef.current) {
+        const rightHand = vrm.humanoid.getRawBoneNode("rightHand");
+        if (rightHand) {
+          rightHand.add(phoneRef.current);
+        }
+      }
     });
 
     const tryAttachPhone = (phone: THREE.Object3D) => {
@@ -197,7 +223,7 @@ export default function VRMAvatar({
     return () => {
       mixerRef.current?.stopAllAction();
     };
-  }, []);
+  }, [vrmUrl]);
 
   // Reset inactivity timer when audio starts (counts as "activity")
   useEffect(() => {
@@ -249,6 +275,10 @@ export default function VRMAvatar({
     const vrm = vrmRef.current;
     if (!vrm) return;
 
+    // Update model position/rotation from props
+    vrm.scene.position.set(modelPosX, modelPosY, modelPosZ);
+    vrm.scene.rotation.y = Math.PI + modelRotY;
+
     mixerRef.current?.update(delta);
     vrm.update(delta);
 
@@ -260,10 +290,10 @@ export default function VRMAvatar({
       const metaL = vrm.humanoid.getRawBoneNode("leftThumbMetacarpal");
       const metaR = humanoid.getRawBoneNode("rightThumbMetacarpal");
 
-      if (leftUpperArm) leftUpperArm.rotation.z -= 0.2;
-      if (rightUpperArm) rightUpperArm.rotation.z += 0.2;
-      if (metaL) metaL.rotation.x -= 0.35;
-      if (metaR) metaR.rotation.x -= 0.35;
+      if (leftUpperArm) leftUpperArm.rotation.z += leftArmZ;
+      if (rightUpperArm) rightUpperArm.rotation.z += rightArmZ;
+      if (metaL) metaL.rotation.x += leftThumbX;
+      if (metaR) metaR.rotation.x += rightThumbX;
     }
 
     // INACTIVITY → random idle animation
@@ -325,5 +355,5 @@ export default function VRMAvatar({
     }
   });
 
-  return vrm ? <primitive object={vrm.scene} position={[0, -1, 0]} /> : null;
+  return vrm ? <primitive object={vrm.scene} /> : null;
 }

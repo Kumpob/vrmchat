@@ -11,6 +11,7 @@ import SettingModal from "@/components/SettingModal";
 import { chatMessage } from "@/components/interfaces";
 import { voiceList } from "@/components/voiceList";
 import HistoryModal from "@/components/historyModal";
+import ModelModal from "@/components/ModelModal";
 
 type SpeechRecognitionType = {
   start: () => void;
@@ -56,6 +57,40 @@ export default function Page() {
   const [speed, setSpeed] = useState(1.2);
 
   const [includeTime, setIncludeTime] = useState(true);
+
+  const [vrmUrl, setVrmUrl] = useState("/avatar.vrm");
+  const vrmInputRef = useRef<HTMLInputElement>(null);
+  const vrmObjectUrlRef = useRef<string | null>(null);
+
+  const [modelModal, setModelModal] = useState(false);
+  const [modelPosX, setModelPosX] = useState(0);
+  const [modelPosY, setModelPosY] = useState(-1);
+  const [modelPosZ, setModelPosZ] = useState(0);
+  const [modelRotY, setModelRotY] = useState(0);
+  const [leftArmZ, setLeftArmZ] = useState(-0.2);
+  const [rightArmZ, setRightArmZ] = useState(0.2);
+  const [leftThumbX, setLeftThumbX] = useState(-0.35);
+  const [rightThumbX, setRightThumbX] = useState(-0.35);
+
+  const resetPose = () => {
+    setModelPosX(0);
+    setModelPosY(0.15);
+    setModelPosZ(2.3);
+    setModelRotY(0);
+    setLeftArmZ(-0.2);
+    setRightArmZ(0.2);
+    setLeftThumbX(-0.35);
+    setRightThumbX(-0.35);
+  };
+
+  const resetAvatar = () => {
+    if (vrmObjectUrlRef.current) {
+      URL.revokeObjectURL(vrmObjectUrlRef.current);
+      vrmObjectUrlRef.current = null;
+    }
+    setVrmUrl("/avatar.vrm");
+    resetPose();
+  };
 
   //save and load api local storage
   useEffect(() => {
@@ -122,6 +157,23 @@ export default function Page() {
     if (savedIncludeTime) {
       setIncludeTime(savedIncludeTime === "true");
     }
+
+    const savedModelPosX = localStorage.getItem("modelPosX");
+    if (savedModelPosX) setModelPosX(parseFloat(savedModelPosX));
+    const savedModelPosY = localStorage.getItem("modelPosY");
+    if (savedModelPosY) setModelPosY(parseFloat(savedModelPosY));
+    const savedModelPosZ = localStorage.getItem("modelPosZ");
+    if (savedModelPosZ) setModelPosZ(parseFloat(savedModelPosZ));
+    const savedModelRotY = localStorage.getItem("modelRotY");
+    if (savedModelRotY) setModelRotY(parseFloat(savedModelRotY));
+    const savedLeftArmZ = localStorage.getItem("leftArmZ");
+    if (savedLeftArmZ) setLeftArmZ(parseFloat(savedLeftArmZ));
+    const savedRightArmZ = localStorage.getItem("rightArmZ");
+    if (savedRightArmZ) setRightArmZ(parseFloat(savedRightArmZ));
+    const savedLeftThumbX = localStorage.getItem("leftThumbX");
+    if (savedLeftThumbX) setLeftThumbX(parseFloat(savedLeftThumbX));
+    const savedRightThumbX = localStorage.getItem("rightThumbX");
+    if (savedRightThumbX) setRightThumbX(parseFloat(savedRightThumbX));
   }, []);
 
   useEffect(() => {
@@ -140,6 +192,14 @@ export default function Page() {
     localStorage.setItem("voice", voice);
     localStorage.setItem("speed", speed.toString());
     localStorage.setItem("includeTime", includeTime.toString());
+    localStorage.setItem("modelPosX", modelPosX.toString());
+    localStorage.setItem("modelPosY", modelPosY.toString());
+    localStorage.setItem("modelPosZ", modelPosZ.toString());
+    localStorage.setItem("modelRotY", modelRotY.toString());
+    localStorage.setItem("leftArmZ", leftArmZ.toString());
+    localStorage.setItem("rightArmZ", rightArmZ.toString());
+    localStorage.setItem("leftThumbX", leftThumbX.toString());
+    localStorage.setItem("rightThumbX", rightThumbX.toString());
   }, [
     apiEndpoint,
     apiKey,
@@ -156,6 +216,14 @@ export default function Page() {
     voice,
     speed,
     includeTime,
+    modelPosX,
+    modelPosY,
+    modelPosZ,
+    modelRotY,
+    leftArmZ,
+    rightArmZ,
+    leftThumbX,
+    rightThumbX,
   ]);
 
   const startListening = () => {
@@ -338,6 +406,18 @@ export default function Page() {
     console.log("audio ended");
   };
 
+  const handleVrmFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (vrmObjectUrlRef.current) {
+      URL.revokeObjectURL(vrmObjectUrlRef.current);
+    }
+    const url = URL.createObjectURL(file);
+    vrmObjectUrlRef.current = url;
+    setVrmUrl(url);
+    e.target.value = "";
+  };
+
   return (
     <main
       style={{
@@ -347,6 +427,60 @@ export default function Page() {
         position: "relative",
       }}
     >
+      <input
+        ref={vrmInputRef}
+        type="file"
+        accept=".vrm"
+        className="hidden"
+        onChange={handleVrmFile}
+      />
+
+      <div className="absolute top-4 left-4 z-50">
+        <div className="relative">
+          <button
+            onClick={() => vrmInputRef.current?.click()}
+            className="hover:scale-240 scale-200 m-4"
+          >
+            🧍
+          </button>
+          <button
+            onClick={() => setModelModal(!modelModal)}
+            className="hover:scale-240 scale-200 m-4"
+          >
+            🎛️
+          </button>
+          {modelModal && (
+            <>
+              <div
+                className="fixed inset-0 z-40"
+                onClick={() => setModelModal(false)}
+              />
+              <ModelModal
+                setOpen={setModelModal}
+                modelPosX={modelPosX}
+                setModelPosX={setModelPosX}
+                modelPosY={modelPosY}
+                setModelPosY={setModelPosY}
+                modelPosZ={modelPosZ}
+                setModelPosZ={setModelPosZ}
+                modelRotY={modelRotY}
+                setModelRotY={setModelRotY}
+                leftArmZ={leftArmZ}
+                setLeftArmZ={setLeftArmZ}
+                rightArmZ={rightArmZ}
+                setRightArmZ={setRightArmZ}
+                leftThumbX={leftThumbX}
+                setLeftThumbX={setLeftThumbX}
+                rightThumbX={rightThumbX}
+                setRightThumbX={setRightThumbX}
+                onResetModel={resetAvatar}
+                onResetPose={resetPose}
+              />
+            </>
+          )}
+        </div>
+      </div>
+
       {/* LOADING SPINNER */}
       {(loading || listening) && (
         <div className="absolute top-4 left-1/2 -translate-x-1/2 z-50 flex flex-col items-center">
@@ -445,9 +579,18 @@ export default function Page() {
           audioUrl={audioUrl}
           stopIdle={stopIdle}
           onAudioEnd={on_audio_end}
+          vrmUrl={vrmUrl}
+          modelPosX={modelPosX}
+          modelPosY={modelPosY}
+          modelPosZ={modelPosZ}
+          modelRotY={modelRotY}
+          leftArmZ={leftArmZ}
+          rightArmZ={rightArmZ}
+          leftThumbX={leftThumbX}
+          rightThumbX={rightThumbX}
         />
 
-        <OrbitControls target={[0.03, 0, 0]} />
+        <OrbitControls target={[0.03, 0, 0]} enablePan={false} enableZoom={false} enableRotate={false} />
       </Canvas>
       <div className="absolute bottom-1/7 left-1/2 -translate-x-1/2 w-7/8 lg:w-1/2 mb-4 lg:m-4 gap-2 flex items-center justify-center">
         <p className="text-sm bg-black/50 text-center w-full">{subtitle}</p>
